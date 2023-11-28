@@ -106,7 +106,7 @@ bt_Tree *bt_create(int (*compare)(void *d1, void *d2), void (*delete)(void *data
  *
  * @param delete Deletion function used to free a node's data pointer when the tree is deleted. In
  * case you only use pointers that can be trivially freed, provide BT_TRIVIAL_DELETE. In case you do
- * not want to delete the data, provide BT_NO_DELETE.
+ * not want to free the data, provide BT_NO_DELETE.
  *
  * @return pointer to the created tree.
  */
@@ -117,7 +117,7 @@ bt_Tree *bt_create_int(void (*delete)(void *data));
  *
  * @param delete Deletion function used to free a node's data pointer when the tree is deleted. In
  * case you only use pointers that can be trivially freed, provide BT_TRIVIAL_DELETE. In case you do
- * not want to delete the data, provide BT_NO_DELETE.
+ * not want to free the data, provide BT_NO_DELETE.
  *
  * @return pointer to the created tree.
  */
@@ -143,8 +143,7 @@ bool bt_add(bt_Tree *tree, void *data);
 bool bt_remove(bt_Tree *tree, void *data);
 
 /**
- * @brief Traverses tree according to strategy used and writes a list in
- * traversal.
+ * @brief Traverses tree according to strategy used and writes the result in the list pointer.
  *
  * @param tree pointer to a tree to traverse.
  * @param strategy strategy to use (@see TraversalStrategy)
@@ -167,7 +166,7 @@ bool bt_remove(bt_Tree *tree, void *data);
  *       printf("%d, ", *(int *)list[idx]->data);
  *   }
  *   free(list);
- *
+ *   bt_delte(tree);
  */
 void bt_traverse(bt_Tree *tree, TraversalStrategy strategy, bt_Node ***list);
 
@@ -260,7 +259,7 @@ bt_Tree *bt_create_int(void (*delete)(void *data)) { return bt_create(&_cmp_int,
 bt_Tree *bt_create_float(void (*delete)(void *data)) { return bt_create(&_cmp_float, delete); }
 
 bool bt_add(bt_Tree *tree, void *data) {
-    size_t added = _add(&tree->root, NULL, data, tree->compare);
+    size_t added = _add(&tree->root, data, tree->compare);
     tree->count += added;
     _balance(&tree->root);
     if (added == 1) {
@@ -331,15 +330,11 @@ static int _cmp_float(void *d1, void *d2) {
     }
 }
 
-static void _del_int(void *data) { free(data); }
-
-static void _del_float(void *data) {}
-
 static void _int_to_str(void *data, char *str) { sprintf(str, "%d", *(int *)data); }
 
 static void _float_to_str(void *data, char *str) { sprintf(str, "%f", *(float *)data); }
 
-static int _add(bt_Node **node, bt_Node *parent, void *data, int (*compare)(void *d1, void *d2)) {
+static int _add(bt_Node **node, void *data, int (*compare)(void *d1, void *d2)) {
     if (*node == NULL) {
         *node = (bt_Node *)malloc(sizeof(bt_Node));
         bt_Node *nod = *node;
@@ -352,9 +347,9 @@ static int _add(bt_Node **node, bt_Node *parent, void *data, int (*compare)(void
     int cmp_result = compare(data, (*node)->data);
 
     if (cmp_result <= -1) {
-        return _add(&(*node)->left, *node, data, compare);
+        return _add(&(*node)->left, data, compare);
     } else if (cmp_result >= 1) {
-        return _add(&(*node)->right, *node, data, compare);
+        return _add(&(*node)->right, data, compare);
     } else {
         return 0;
     }
