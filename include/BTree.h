@@ -259,7 +259,7 @@ bt_Tree *bt_create_int(void (*delete)(void *data)) { return bt_create(&_cmp_int,
 bt_Tree *bt_create_float(void (*delete)(void *data)) { return bt_create(&_cmp_float, delete); }
 
 bool bt_add(bt_Tree *tree, void *data) {
-    size_t added = _add(&tree->root, data, tree->compare);
+    size_t added = _add(&tree->root, NULL, data, tree->compare);
     tree->count += added;
     _balance(&tree->root);
     if (added == 1) {
@@ -334,7 +334,7 @@ static void _int_to_str(void *data, char *str) { sprintf(str, "%d", *(int *)data
 
 static void _float_to_str(void *data, char *str) { sprintf(str, "%f", *(float *)data); }
 
-static int _add(bt_Node **node, void *data, int (*compare)(void *d1, void *d2)) {
+static int _add(bt_Node **node, bt_Node *parent, void *data, int (*compare)(void *d1, void *d2)) {
     if (*node == NULL) {
         *node = (bt_Node *)malloc(sizeof(bt_Node));
         bt_Node *nod = *node;
@@ -347,9 +347,9 @@ static int _add(bt_Node **node, void *data, int (*compare)(void *d1, void *d2)) 
     int cmp_result = compare(data, (*node)->data);
 
     if (cmp_result <= -1) {
-        return _add(&(*node)->left, data, compare);
+        return _add(&(*node)->left, parent, data, compare);
     } else if (cmp_result >= 1) {
-        return _add(&(*node)->right, data, compare);
+        return _add(&(*node)->right, parent, data, compare);
     } else {
         return 0;
     }
